@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>VR Chem-Reactor: Boss Battle</title>
+    <title>VR Chem-Reactor: Core Meltdown</title>
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
     <script src="https://unpkg.com/aframe-environment-component@1.3.3/dist/aframe-environment-component.min.js"></script>
 
@@ -25,65 +25,122 @@
             self.ch4 = 1; self.o2 = 1; self.co2 = 1; self.h2o = 1; self.checkBalance(); 
           });
 
-          // Run initial check to display starting numbers
+          // Run initial check
           this.checkBalance();
         },
 
+        // Helper function to generate physical 3D spheres for atoms
+        generateAtomSpheres: function(cCount, hCount, oCount) {
+          let html = '';
+          let xOffset = 0;
+          
+          // Render Carbon (Black)
+          for(let i=0; i < cCount; i++) {
+             html += `<a-sphere color="#222222" radius="0.18" position="${xOffset} 0 0" material="metalness: 0.5; roughness: 0.5"></a-sphere>`;
+             xOffset += 0.4;
+          }
+          // Render Hydrogen (White)
+          for(let i=0; i < hCount; i++) {
+             html += `<a-sphere color="#FFFFFF" radius="0.12" position="${xOffset} 0 0"></a-sphere>`;
+             xOffset += 0.3;
+          }
+          // Render Oxygen (Red)
+          for(let i=0; i < oCount; i++) {
+             html += `<a-sphere color="#FF0000" radius="0.15" position="${xOffset} 0 0" material="metalness: 0.3; roughness: 0.4"></a-sphere>`;
+             xOffset += 0.35;
+          }
+          return html;
+        },
+
         checkBalance: function () {
-          // Update the main holographic text
+          // 1. Update the main holographic text
           const equationStr = `${this.ch4} CH4  +  ${this.o2} O2   --->   ${this.co2} CO2  +  ${this.h2o} H2O`;
           document.querySelector('#equation-display').setAttribute('value', equationStr);
 
+          // 2. Calculate actual atoms for 3D visualization
+          const reactC = this.ch4;
+          const reactH = this.ch4 * 4;
+          const reactO = this.o2 * 2;
+          
+          const prodC = this.co2;
+          const prodH = this.h2o * 2;
+          const prodO = (this.co2 * 2) + this.h2o;
+
+          // 3. Render the 3D atoms to the console
+          document.querySelector('#reactants-atoms').innerHTML = this.generateAtomSpheres(reactC, reactH, reactO);
+          document.querySelector('#products-atoms').innerHTML = this.generateAtomSpheres(prodC, prodH, prodO);
+
+          // 4. Check Win Condition and control dynamic lighting/status
           const statusText = document.querySelector('#status-display');
+          const alertLight = document.querySelector('#alert-light');
           
           // Win Condition: CH4 + 2O2 -> CO2 + 2H2O
           if (this.ch4 === 1 && this.o2 === 2 && this.co2 === 1 && this.h2o === 2) {
-            statusText.setAttribute('value', 'SYSTEM STABLE: EQUATION BALANCED!');
-            statusText.setAttribute('color', '#00FF00'); // Green for success
+            statusText.setAttribute('value', 'SYSTEM STABLE: MASS CONSERVED!');
+            statusText.setAttribute('color', '#00FF00'); 
+            
+            // Set lighting to calm green
+            alertLight.removeAttribute('animation');
+            alertLight.setAttribute('color', '#00FF00');
+            alertLight.setAttribute('intensity', '1.5');
           } else {
-            statusText.setAttribute('value', 'WARNING: MASS NOT CONSERVED. MELTDOWN IMMINENT!');
-            statusText.setAttribute('color', '#FF0000'); // Red for danger
+            statusText.setAttribute('value', 'WARNING: ATOMS IMBALANCED. MELTDOWN IMMINENT!');
+            statusText.setAttribute('color', '#FF0000'); 
+            
+            // Set lighting to pulsing red alert
+            alertLight.setAttribute('color', '#FF0000');
+            alertLight.setAttribute('animation', 'property: light.intensity; from: 0.5; to: 3; dir: alternate; loop: true; dur: 500');
           }
         }
       });
     </script>
   </head>
   <body>
-    <a-scene environment="preset: tron; skyType: atmosphere; lighting: point" reactor-logic>
+    <a-scene environment="preset: tron; skyType: atmosphere; lighting: none" reactor-logic>
       
-      <a-box position="0 2 -4" width="7" height="3" depth="0.5" color="#222222" opacity="0.8"></a-box>
+      <a-light type="ambient" color="#333333"></a-light>
+      <a-light id="alert-light" type="point" position="0 3 -2" color="#FF0000" intensity="1"></a-light>
       
-      <a-text id="equation-display" position="-2.8 2.5 -3.7" width="8" color="#00FFFF" font="monoid"></a-text>
-      <a-text id="status-display" position="-2.3 1.5 -3.7" width="5" color="#FF0000" font="mozillavr"></a-text>
+      <a-box position="0 2.2 -4" width="8" height="4.5" depth="0.5" 
+             material="color: #2a2a2a; metalness: 0.8; roughness: 0.3"></a-box>
+      
+      <a-text id="equation-display" position="-3 2.5 -3.7" width="8" color="#00FFFF" font="exo2bold"></a-text>
+      <a-text id="status-display" position="-2.6 1.8 -3.7" width="5" color="#FF0000" font="exo2bold"></a-text>
 
-      <a-box id="btn-ch4" class="clickable" position="-2 0.5 -3" width="0.8" height="0.4" depth="0.2" color="#4CC3D9"
+      <a-text value="Reactant Atoms:" position="-3.5 3.8 -3.7" width="4" color="#AAAAAA" font="exo2bold"></a-text>
+      <a-entity id="reactants-atoms" position="-3.5 3.4 -3.7"></a-entity>
+
+      <a-text value="Product Atoms:" position="0.5 3.8 -3.7" width="4" color="#AAAAAA" font="exo2bold"></a-text>
+      <a-entity id="products-atoms" position="0.5 3.4 -3.7"></a-entity>
+
+      <a-box id="btn-ch4" class="clickable" position="-2.2 0.8 -3" width="0.9" height="0.4" depth="0.2" color="#4CC3D9"
              animation__mouseenter="property: scale; to: 1.1 1.1 1.1; startEvents: mouseenter; dur: 200"
              animation__mouseleave="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200">
-        <a-text value="+ CH4" position="-0.25 0 0.15" width="3" color="#000000"></a-text>
+        <a-text value="+ CH4" position="-0.25 0 0.15" width="3" color="#000000" font="exo2bold"></a-text>
       </a-box>
 
-      <a-box id="btn-o2" class="clickable" position="-0.5 0.5 -3" width="0.8" height="0.4" depth="0.2" color="#4CC3D9"
+      <a-box id="btn-o2" class="clickable" position="-0.5 0.8 -3" width="0.9" height="0.4" depth="0.2" color="#4CC3D9"
              animation__mouseenter="property: scale; to: 1.1 1.1 1.1; startEvents: mouseenter; dur: 200"
              animation__mouseleave="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200">
-        <a-text value="+ O2" position="-0.2 0 0.15" width="3" color="#000000"></a-text>
+        <a-text value="+ O2" position="-0.2 0 0.15" width="3" color="#000000" font="exo2bold"></a-text>
       </a-box>
 
-      <a-box id="btn-co2" class="clickable" position="1 0.5 -3" width="0.8" height="0.4" depth="0.2" color="#EF2D5E"
+      <a-box id="btn-co2" class="clickable" position="1.2 0.8 -3" width="0.9" height="0.4" depth="0.2" color="#EF2D5E"
              animation__mouseenter="property: scale; to: 1.1 1.1 1.1; startEvents: mouseenter; dur: 200"
              animation__mouseleave="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200">
-        <a-text value="+ CO2" position="-0.25 0 0.15" width="3" color="#FFFFFF"></a-text>
+        <a-text value="+ CO2" position="-0.25 0 0.15" width="3" color="#FFFFFF" font="exo2bold"></a-text>
       </a-box>
 
-      <a-box id="btn-h2o" class="clickable" position="2.5 0.5 -3" width="0.8" height="0.4" depth="0.2" color="#EF2D5E"
+      <a-box id="btn-h2o" class="clickable" position="2.9 0.8 -3" width="0.9" height="0.4" depth="0.2" color="#EF2D5E"
              animation__mouseenter="property: scale; to: 1.1 1.1 1.1; startEvents: mouseenter; dur: 200"
              animation__mouseleave="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200">
-        <a-text value="+ H2O" position="-0.25 0 0.15" width="3" color="#FFFFFF"></a-text>
+        <a-text value="+ H2O" position="-0.25 0 0.15" width="3" color="#FFFFFF" font="exo2bold"></a-text>
       </a-box>
 
-      <a-box id="btn-reset" class="clickable" position="0 -0.2 -3" width="1" height="0.3" depth="0.2" color="#FFC65D"
+      <a-box id="btn-reset" class="clickable" position="0.3 0 -3" width="1.2" height="0.3" depth="0.2" color="#FFC65D"
              animation__mouseenter="property: scale; to: 1.1 1.1 1.1; startEvents: mouseenter; dur: 200"
              animation__mouseleave="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200">
-        <a-text value="PURGE & RESET" position="-0.45 0 0.15" width="2.5" color="#000000"></a-text>
+        <a-text value="PURGE & RESET" position="-0.5 0 0.15" width="2.5" color="#000000" font="exo2bold"></a-text>
       </a-box>
 
       <a-entity position="0 1.6 0">
