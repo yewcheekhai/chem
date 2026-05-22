@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>VR Chem-Reactor: Boss Battle</title>
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <script src="https://unpkg.com/aframe-environment-component@1.3.3/dist/aframe-environment-component.min.js"></script>
+
+    <script>
+      AFRAME.registerComponent('reactor-logic', {
+        init: function () {
+          // Starting coefficients
+          this.ch4 = 1;
+          this.o2 = 1;
+          this.co2 = 1;
+          this.h2o = 1;
+
+          // Bind click events to the 3D buttons
+          const self = this;
+          document.querySelector('#btn-ch4').addEventListener('click', function() { self.ch4++; self.checkBalance(); });
+          document.querySelector('#btn-o2').addEventListener('click', function() { self.o2++; self.checkBalance(); });
+          document.querySelector('#btn-co2').addEventListener('click', function() { self.co2++; self.checkBalance(); });
+          document.querySelector('#btn-h2o').addEventListener('click', function() { self.h2o++; self.checkBalance(); });
+          document.querySelector('#btn-reset').addEventListener('click', function() { 
+            self.ch4 = 1; self.o2 = 1; self.co2 = 1; self.h2o = 1; self.checkBalance(); 
+          });
+
+          // Run initial check to display starting numbers
+          this.checkBalance();
+        },
+
+        checkBalance: function () {
+          // Update the main holographic text
+          const equationStr = `${this.ch4} CH4  +  ${this.o2} O2   --->   ${this.co2} CO2  +  ${this.h2o} H2O`;
+          document.querySelector('#equation-display').setAttribute('value', equationStr);
+
+          const statusText = document.querySelector('#status-display');
+          
+          // Win Condition: CH4 + 2O2 -> CO2 + 2H2O
+          if (this.ch4 === 1 && this.o2 === 2 && this.co2 === 1 && this.h2o === 2) {
+            statusText.setAttribute('value', 'SYSTEM STABLE: EQUATION BALANCED!');
+            statusText.setAttribute('color', '#00FF00'); // Green for success
+          } else {
+            statusText.setAttribute('value', 'WARNING: MASS NOT CONSERVED. MELTDOWN IMMINENT!');
+            statusText.setAttribute('color', '#FF0000'); // Red for danger
+          }
+        }
+      });
+    </script>
+  </head>
+  <body>
+    <a-scene environment="preset: tron; skyType: atmosphere; lighting: point" reactor-logic>
+      
+      <a-box position="0 2 -4" width="7" height="3" depth="0.5" color="#222222" opacity="0.8"></a-box>
+      
+      <a-text id="equation-display" position="-2.8 2.5 -3.7" width="8" color="#00FFFF" font="monoid"></a-text>
+      <a-text id="status-display" position="-2.3 1.5 -3.7" width="5" color="#FF0000" font="mozillavr"></a-text>
+
+      <a-box id="btn-ch4" class="clickable" position="-2 0.5 -3" width="0.8" height="0.4" depth="0.2" color="#4CC3D9"
+             animation__mouseenter="property: scale; to: 1.1 1.1 1.1; startEvents: mouseenter; dur: 200"
+             animation__mouseleave="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200">
+        <a-text value="+ CH4" position="-0.25 0 0.15" width="3" color="#000000"></a-text>
+      </a-box>
+
+      <a-box id="btn-o2" class="clickable" position="-0.5 0.5 -3" width="0.8" height="0.4" depth="0.2" color="#4CC3D9"
+             animation__mouseenter="property: scale; to: 1.1 1.1 1.1; startEvents: mouseenter; dur: 200"
+             animation__mouseleave="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200">
+        <a-text value="+ O2" position="-0.2 0 0.15" width="3" color="#000000"></a-text>
+      </a-box>
+
+      <a-box id="btn-co2" class="clickable" position="1 0.5 -3" width="0.8" height="0.4" depth="0.2" color="#EF2D5E"
+             animation__mouseenter="property: scale; to: 1.1 1.1 1.1; startEvents: mouseenter; dur: 200"
+             animation__mouseleave="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200">
+        <a-text value="+ CO2" position="-0.25 0 0.15" width="3" color="#FFFFFF"></a-text>
+      </a-box>
+
+      <a-box id="btn-h2o" class="clickable" position="2.5 0.5 -3" width="0.8" height="0.4" depth="0.2" color="#EF2D5E"
+             animation__mouseenter="property: scale; to: 1.1 1.1 1.1; startEvents: mouseenter; dur: 200"
+             animation__mouseleave="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200">
+        <a-text value="+ H2O" position="-0.25 0 0.15" width="3" color="#FFFFFF"></a-text>
+      </a-box>
+
+      <a-box id="btn-reset" class="clickable" position="0 -0.2 -3" width="1" height="0.3" depth="0.2" color="#FFC65D"
+             animation__mouseenter="property: scale; to: 1.1 1.1 1.1; startEvents: mouseenter; dur: 200"
+             animation__mouseleave="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200">
+        <a-text value="PURGE & RESET" position="-0.45 0 0.15" width="2.5" color="#000000"></a-text>
+      </a-box>
+
+      <a-entity position="0 1.6 0">
+        <a-camera>
+          <a-cursor color="#FFFFFF" raycaster="objects: .clickable"></a-cursor>
+        </a-camera>
+        <a-entity laser-controls="hand: left" raycaster="objects: .clickable"></a-entity>
+        <a-entity laser-controls="hand: right" raycaster="objects: .clickable"></a-entity>
+      </a-entity>
+
+    </a-scene>
+  </body>
+</html>
